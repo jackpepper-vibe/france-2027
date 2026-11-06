@@ -29,7 +29,7 @@ export default async function handler(request: Request): Promise<Response> {
 
   const client = new Anthropic({ apiKey });
   const stream = client.messages.stream({
-    model: 'claude-sonnet-5-5',
+    model: 'claude-sonnet-5',
     max_tokens: 900,
     system: `You are a friendly local guide helping an Irish family of five on a summer road trip in France: two parents and three kids aged 9, 11 and 13. They have a car.
 Give specific, real places with their actual names. Prefer places that are open in July and good for that age range.
