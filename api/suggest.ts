@@ -28,7 +28,7 @@ export async function POST(request: Request): Promise<Response> {
 
   const client = new Anthropic({ apiKey });
   const stream = client.messages.stream({
-    model: 'claude-sonnet-5',
+    model: 'claude-sonnet-5-5',
     // Sonnet 5 thinks by default; a tight cap let thinking consume the whole budget and
     // end the stream with no text. Low effort keeps replies quick for a simple list.
     max_tokens: 8000,
