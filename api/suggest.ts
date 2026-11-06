@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-export const config = { runtime: 'edge' };
+// Node.js runtime: the Anthropic SDK imports @opentelemetry/api, which the Edge runtime cannot bundle.
+export const config = { maxDuration: 60 };
 
 // Kept in step with src/data.ts — just what Claude needs to know about each stop.
 const STOPS: Record<string, { place: string; stay: string; dates: string }> = {
@@ -13,9 +14,7 @@ const STOPS: Record<string, { place: string; stay: string; dates: string }> = {
   granville: { place: 'Granville, Normandy, on the cliff by the old walled town', stay: 'Mercure Granville Le Grand Large', dates: '19–20 July 2027' },
 };
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
-
+export async function POST(request: Request): Promise<Response> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return new Response('ANTHROPIC_API_KEY is not set on this Vercel project', { status: 500 });
 
