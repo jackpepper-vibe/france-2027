@@ -171,10 +171,10 @@ function todayScreen(): string {
 }
 
 function phrasebook(): string {
-  return `<details class="block phrases"><summary><h2>Speak French</h2></summary>
+  return `<section class="block phrases"><h2>Speak French</h2>
     <dl>${PHRASES.map(p => `<div><dt lang="fr">${esc(p.fr)}</dt><dd>${esc(p.en)}</dd>
-      ${speaker.supported ? `<button class="say-btn" type="button" data-say="${esc(p.fr)}" aria-label="Play “${esc(p.fr)}”" aria-pressed="false">${icon('speaker', 22)}</button>` : ''}</div>`).join('')}</dl>
-  </details>`;
+      ${speaker.canSpeak(p.fr) ? `<button class="say-btn" type="button" data-say="${esc(p.fr)}" aria-label="Play “${esc(p.fr)}”" aria-pressed="false">${icon('speaker', 22)}</button>` : ''}</div>`).join('')}</dl>
+  </section>`;
 }
 
 // Tide table for a stop; pass `from` to show just that day and the next (Today screen).
@@ -424,5 +424,6 @@ speaker.onChange(playing => {
 });
 
 window.addEventListener('hashchange', route);
+window.addEventListener('load', () => speaker.prefetch());
 today();
 route();

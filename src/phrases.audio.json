@@ -1,0 +1,12 @@
+{
+  "voice": "fr-FR-EloiseNeural",
+  "clips": {
+    "Bonjour": "/audio/phrases/b26f0c194373.mp3",
+    "Merci": "/audio/phrases/0ff5506193f4.mp3",
+    "S’il vous plaît": "/audio/phrases/3aa3c294dc95.mp3",
+    "Une glace, s’il vous plaît": "/audio/phrases/fd4a676aeaac.mp3",
+    "Où sont les toilettes ?": "/audio/phrases/83ee143d3865.mp3",
+    "Je voudrais un croissant": "/audio/phrases/8af2567f889d.mp3",
+    "Au revoir": "/audio/phrases/3ae2e78a3505.mp3"
+  }
+}

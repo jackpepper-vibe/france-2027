@@ -1,58 +1,84 @@
-// French text-to-speech for the phrasebook, using the device's own voices (Web Speech API).
-// No network needed once the phone has a French voice, which iOS and Android ship by default.
+// Phrasebook audio. Each phrase has a pre-recorded clip (tools/speech/phrases.py) so every
+// phone plays the same voice, offline once cached. A phrase without a clip falls back to
+// the device's own French text-to-speech.
+import audio from './phrases.audio.json';
 
+const CLIPS: Record<string, string> = audio.clips;
 const LANG = 'fr-FR';
-const RATE = 0.85;   // a little slower than conversational, so it's easier to copy
+const RATE = 0.85;
 
 type Listener = (playing: string | null) => void;
 
 class FrenchSpeaker {
-  private voice: SpeechSynthesisVoice | null = null;
   private playing: string | null = null;
+  private player: HTMLAudioElement | null = null;
   private listeners = new Set<Listener>();
-  readonly supported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  private readonly tts = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  private prefetched = false;
 
-  constructor() {
-    if (!this.supported) return;
-    this.pickVoice();
-    // Voices load asynchronously on most browsers.
-    speechSynthesis.addEventListener('voiceschanged', () => this.pickVoice());
-  }
+  /** Whether `text` can be played at all on this device. */
+  canSpeak(text: string): boolean { return text in CLIPS || this.tts; }
 
-  /** Speak `text`; tapping the phrase that's already playing stops it. */
+  /** Play `text`; tapping the phrase that's already playing stops it. */
   toggle(text: string): void {
-    if (!this.supported) return;
     const wasPlaying = this.playing === text;
-    speechSynthesis.cancel();
-    this.setPlaying(null);
-    if (wasPlaying) return;
-
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = LANG;
-    u.rate = RATE;
-    if (this.voice) u.voice = this.voice;
-    const finish = () => { if (this.playing === text) this.setPlaying(null); };
-    u.addEventListener('end', finish);
-    u.addEventListener('error', finish);
-    this.setPlaying(text);
-    speechSynthesis.speak(u);
+    this.stop();
+    if (!wasPlaying) this.play(text);
   }
 
   onChange(fn: Listener): void { this.listeners.add(fn); }
 
+  /** Fetch every clip once so the service worker caches them for offline use. */
+  prefetch(): void {
+    if (this.prefetched || !navigator.onLine) return;
+    this.prefetched = true;
+    for (const url of Object.values(CLIPS)) fetch(url, { priority: 'low' } as RequestInit).catch(() => { this.prefetched = false; });
+  }
+
+  private play(text: string): void {
+    const url = CLIPS[text];
+    this.setPlaying(text);
+    if (url) {
+      const a = (this.player ??= new Audio());
+      a.src = url;
+      a.onended = () => this.finished(text);
+      // Clip unavailable (offline before it was cached): fall back to the device voice.
+      // Both the error event and the play() rejection report the failure; act on the first.
+      let fellBack = false;
+      const fallBack = () => {
+        if (fellBack || this.playing !== text) return;
+        fellBack = true;
+        this.speakWithDevice(text);
+      };
+      a.onerror = fallBack;
+      a.play().catch(fallBack);
+    } else {
+      this.speakWithDevice(text);
+    }
+  }
+
+  private speakWithDevice(text: string): void {
+    if (!this.tts) { this.finished(text); return; }
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = LANG;
+    u.rate = RATE;
+    u.onend = u.onerror = () => this.finished(text);
+    speechSynthesis.speak(u);
+  }
+
+  private stop(): void {
+    if (this.player) { this.player.onended = this.player.onerror = null; this.player.pause(); }
+    if (this.tts) speechSynthesis.cancel();
+    this.setPlaying(null);
+  }
+
+  private finished(text: string): void {
+    if (this.playing === text) this.setPlaying(null);
+  }
+
   private setPlaying(text: string | null): void {
     this.playing = text;
     this.listeners.forEach(fn => fn(text));
-  }
-
-  /** Prefer an on-device France-French voice (works offline), then any French voice. */
-  private pickVoice(): void {
-    const voices = speechSynthesis.getVoices();
-    const fr = voices.filter(v => v.lang.replace('_', '-').toLowerCase().startsWith('fr'));
-    this.voice =
-      fr.find(v => v.lang.replace('_', '-') === LANG && v.localService) ??
-      fr.find(v => v.lang.replace('_', '-') === LANG) ??
-      fr[0] ?? null;
   }
 }
 

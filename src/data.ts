@@ -1,3 +1,4 @@
+import phrases from './phrases.json';
 import { LACANAU_TIDES } from './tides.lacanau';
 
 export type StopId =
@@ -251,12 +252,5 @@ export const RIDES: { park: string; rides: Ride[] }[] = [
 ];
 
 export interface Phrase { fr: string; en: string }
-export const PHRASES: Phrase[] = [
-  { fr: 'Bonjour', en: 'Hello' },
-  { fr: 'Merci', en: 'Thank you' },
-  { fr: 'S’il vous plaît', en: 'Please' },
-  { fr: 'Une glace, s’il vous plaît', en: 'An ice cream, please' },
-  { fr: 'Où sont les toilettes ?', en: 'Where are the toilets?' },
-  { fr: 'Je voudrais un croissant', en: 'I’d like a croissant' },
-  { fr: 'Au revoir', en: 'Goodbye' },
-];
+// Phrases live in JSON so tools/speech/phrases.py can record audio for them.
+export const PHRASES: Phrase[] = phrases;
