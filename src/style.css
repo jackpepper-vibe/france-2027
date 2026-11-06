@@ -113,12 +113,17 @@ details > summary::-webkit-details-marker { display: none; }
 .phrases summary h2::after { content: "Show"; font-weight: 700; color: var(--blue); }
 .phrases[open] summary h2::after { content: "Hide"; }
 .phrases dl { margin: 10px 0 0; background: var(--panel); border-radius: var(--radius-sign); border: 2px solid var(--line); }
-.phrases dl > div { padding: 10px 14px; }
+.phrases dl > div { padding: 10px 14px; display: grid; grid-template-columns: 1fr auto; column-gap: 12px; align-items: center; }
+.phrases dt, .phrases dd { grid-column: 1; }
 .phrases dl > div + div { border-top: 1px solid var(--line); }
 .phrases dt { font-weight: 800; }
 .phrases dd { margin: 0; color: var(--muted); font-size: 15px; }
-.say { color: var(--red); font-weight: 700; margin-right: 8px; }
-@media (prefers-color-scheme: dark) { .say { color: #FF7A7E; } .phrases summary h2::after { color: #8FB4F0; } }
+.say-btn { grid-column: 2; grid-row: 1 / span 2; width: 48px; height: 48px; border-radius: 50%; border: 0; display: grid; place-items: center; background: var(--red); color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.say-btn:active { transform: scale(0.94); }
+.say-btn.is-playing { animation: say-pulse 0.9s ease-in-out infinite; }
+@keyframes say-pulse { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--red) 25%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .say-btn.is-playing { animation: none; outline: 3px solid var(--red); outline-offset: 3px; } }
+@media (prefers-color-scheme: dark) { .phrases summary h2::after { color: #8FB4F0; } }
 .preview { margin-top: 36px; font-size: 14px; color: var(--muted); }
 .preview summary { text-decoration: underline; text-underline-offset: 3px; }
 .preview-row { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }

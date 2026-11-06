@@ -1,5 +1,6 @@
 import '@fontsource-variable/overpass';
 import './style.css';
+import { speaker } from './speech';
 import {
   STOPS, ROUTE, DAYS, LEGS, SAILINGS, TIDES, RIDES, PHRASES, TRIP_START, TRIP_END,
   type Stop, type StopId, type Day,
@@ -51,6 +52,7 @@ const I = {
   arrow: '<path d="M4 12h15M13 6l6 6-6 6"/>',
   pin: '<path d="M12 21s-7-6.3-7-12a7 7 0 0 1 14 0c0 5.7-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  speaker: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/>',
   wave: '<path d="M2 15c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2"/><path d="M2 10c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2"/>',
 };
 const icon = (k: keyof typeof I, size = 22) =>
@@ -170,7 +172,8 @@ function todayScreen(): string {
 
 function phrasebook(): string {
   return `<details class="block phrases"><summary><h2>Speak French</h2></summary>
-    <dl>${PHRASES.map(([fr, say, en]) => `<div><dt>${esc(fr)}</dt><dd><span class="say">${esc(say)}</span>${esc(en)}</dd></div>`).join('')}</dl>
+    <dl>${PHRASES.map(p => `<div><dt lang="fr">${esc(p.fr)}</dt><dd>${esc(p.en)}</dd>
+      ${speaker.supported ? `<button class="say-btn" type="button" data-say="${esc(p.fr)}" aria-label="Play “${esc(p.fr)}”" aria-pressed="false">${icon('speaker', 22)}</button>` : ''}</div>`).join('')}</dl>
   </details>`;
 }
 
@@ -383,6 +386,8 @@ document.addEventListener('click', e => {
     done.classList.toggle('is-done', on); done.setAttribute('aria-pressed', String(on));
     store.set(done.dataset.done!, on ? '1' : null); return;
   }
+  const say = el.closest<HTMLButtonElement>('[data-say]');
+  if (say) { speaker.toggle(say.dataset.say!); return; }
   const act = el.closest<HTMLElement>('[data-action]');
   if (act?.dataset.action === 'ask') void ask(act.closest<HTMLElement>('[data-ask]')!);
   if (act?.dataset.action === 'preview-clear') { store.set('previewDate', null); history.replaceState(null, '', location.pathname + location.hash); route(); }
@@ -391,6 +396,13 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   const el = e.target as HTMLInputElement;
   if (el.id === 'preview-date' && el.value) { store.set('previewDate', el.value); route(); }
+});
+
+speaker.onChange(playing => {
+  document.querySelectorAll<HTMLButtonElement>('[data-say]').forEach(b => {
+    const on = b.dataset.say === playing;
+    b.classList.toggle('is-playing', on); b.setAttribute('aria-pressed', String(on));
+  });
 });
 
 window.addEventListener('hashchange', route);

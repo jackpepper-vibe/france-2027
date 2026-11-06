@@ -250,12 +250,13 @@ export const RIDES: { park: string; rides: Ride[] }[] = [
   ] },
 ];
 
-export const PHRASES = [
-  ['Bonjour', 'bon-ZHOOR', 'Hello'],
-  ['Merci', 'mair-SEE', 'Thank you'],
-  ['S’il vous plaît', 'seel voo PLAY', 'Please'],
-  ['Une glace, s’il vous plaît', 'oon GLASS seel voo PLAY', 'An ice cream, please'],
-  ['Où sont les toilettes ?', 'oo son lay twa-LET', 'Where are the toilets?'],
-  ['Je voudrais un croissant', 'zhuh voo-DRAY an KWA-son', 'I’d like a croissant'],
-  ['Au revoir', 'oh ruh-VWAR', 'Goodbye'],
+export interface Phrase { fr: string; en: string }
+export const PHRASES: Phrase[] = [
+  { fr: 'Bonjour', en: 'Hello' },
+  { fr: 'Merci', en: 'Thank you' },
+  { fr: 'S’il vous plaît', en: 'Please' },
+  { fr: 'Une glace, s’il vous plaît', en: 'An ice cream, please' },
+  { fr: 'Où sont les toilettes ?', en: 'Where are the toilets?' },
+  { fr: 'Je voudrais un croissant', en: 'I’d like a croissant' },
+  { fr: 'Au revoir', en: 'Goodbye' },
 ];
