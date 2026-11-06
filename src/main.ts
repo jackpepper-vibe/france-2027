@@ -162,7 +162,7 @@ function todayScreen(): string {
     <a class="btn btn--primary" href="${mapsUrl(s.mapsQuery)}" target="_blank" rel="noopener">${icon('pin', 18)} Directions</a>`}
     ${ferryToday >= 0 ? `<section class="block"><h2>Sailing today</h2>${sailingPass(ferryToday)}</section>` : ''}
     ${nextHtml}
-    ${day.stop === 'granville' || (day.stop === 'ferry-home' && t === '2027-07-20') ? tidesBlock() : ''}
+    ${tidesBlock(day.stop === 'ferry-home' ? 'granville' : day.stop, t)}
     ${phrasebook()}
     ${preview}
   </main>`;
@@ -174,11 +174,17 @@ function phrasebook(): string {
   </details>`;
 }
 
-function tidesBlock(): string {
-  return `<section class="block"><h2>Granville tides</h2>
+// Tide table for a stop; pass `from` to show just that day and the next (Today screen).
+function tidesBlock(id: StopId, from?: string): string {
+  const t = TIDES[id];
+  if (!t) return '';
+  const start = from ? t.days.findIndex(d => d.date === from) : 0;
+  if (start < 0) return '';
+  const days = from ? t.days.slice(start, start + 2) : t.days;
+  return `<section class="block"><h2>${esc(t.place)} tides</h2>
     <table class="tides"><thead><tr><th scope="col"></th><th scope="col">High tide</th><th scope="col">Low tide</th></tr></thead>
-    <tbody>${TIDES.map(r => `<tr><th scope="row">${r.day}</th><td>${r.high.join(' · ')}</td><td>${r.low.join(' · ')}</td></tr>`).join('')}</tbody></table>
-    <p class="note">French time. The sea rises about 9 m, and comes in fast across the sand.</p></section>`;
+    <tbody>${days.map(r => `<tr><th scope="row">${esc(r.day)}</th><td>${r.high.join(' · ')}</td><td>${r.low.join(' · ')}</td></tr>`).join('')}</tbody></table>
+    <p class="note">${esc(t.note)}</p></section>`;
 }
 
 function tripScreen(): string {
@@ -210,9 +216,8 @@ function stopScreen(id: StopId): string {
   const r = stopRange(id);
   const doneKey = (i: number) => `done:${id}:${i}`;
 
-  let extra = '';
-  if (id === 'disney') extra = ridesBlock();
-  if (id === 'granville') extra = tidesBlock();
+  let extra = tidesBlock(id);
+  if (id === 'disney') extra += ridesBlock();
   if (id === 'ferry-out') extra = `<section class="block"><h2>Sailing</h2>${sailingPass(0)}</section>`;
   if (id === 'ferry-home') extra = `<section class="block"><h2>Sailing</h2>${sailingPass(1)}</section>
     <section class="block"><h2>The way home</h2><img class="map-img" src="/art/ferrymap.svg" alt="Map of the ferry route from Cherbourg, round Cornwall, to Dublin"></section>`;

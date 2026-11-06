@@ -1,3 +1,5 @@
+import { LACANAU_TIDES } from './tides.lacanau';
+
 export type StopId =
   | 'ferry-out' | 'paris' | 'disney' | 'beauval' | 'loire'
   | 'lacanau' | 'rochelle' | 'granville' | 'ferry-home';
@@ -207,10 +209,24 @@ export const SAILINGS = [
   { label: 'Home', date: 'Tue 20 Jul', from: 'Cherbourg', dep: '16:30', to: 'Dublin', arr: '10:45', arrDay: 'Wed 21 Jul' },
 ];
 
-export const TIDES = [
-  { day: 'Mon 19 Jul', high: ['08:44', '20:58'], low: ['03:22', '15:40'] },
-  { day: 'Tue 20 Jul', high: ['09:18', '21:30'], low: ['04:00', '16:15'] },
-];
+export interface TideDay { date: string; day: string; high: string[]; low: string[] }
+export interface TideTable { place: string; note: string; days: TideDay[] }
+
+export const TIDES: Partial<Record<StopId, TideTable>> = {
+  lacanau: {
+    place: 'Lacanau',
+    note: 'French time, predicted for the beach at Lacanau-Océan (to within about 10 minutes). Swim between the flags: the baïnes (channels in the sand) pull hardest as the tide goes out.',
+    days: LACANAU_TIDES,
+  },
+  granville: {
+    place: 'Granville',
+    note: 'French time. The sea rises about 9 m, and comes in fast across the sand.',
+    days: [
+      { date: '2027-07-19', day: 'Mon 19 Jul', high: ['08:44', '20:58'], low: ['03:22', '15:40'] },
+      { date: '2027-07-20', day: 'Tue 20 Jul', high: ['09:18', '21:30'], low: ['04:00', '16:15'] },
+    ],
+  },
+};
 
 export interface Ride { name: string; thrill: number; height: string | null; text: string }
 export const RIDES: { park: string; rides: Ride[] }[] = [
