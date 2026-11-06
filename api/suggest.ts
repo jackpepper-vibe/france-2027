@@ -29,7 +29,10 @@ export async function POST(request: Request): Promise<Response> {
   const client = new Anthropic({ apiKey });
   const stream = client.messages.stream({
     model: 'claude-sonnet-5',
-    max_tokens: 900,
+    // Sonnet 5 thinks by default; a tight cap let thinking consume the whole budget and
+    // end the stream with no text. Low effort keeps replies quick for a simple list.
+    max_tokens: 8000,
+    output_config: { effort: 'low' },
     system: `You are a friendly local guide helping an Irish family of five on a summer road trip in France: two parents and three kids aged 9, 11 and 13. They have a car.
 Give specific, real places with their actual names. Prefer places that are open in July and good for that age range.
 Reply with a numbered list of 5 ideas. For each: the name in **bold**, then one or two short sentences on why it suits this family and any practical tip (booking, best time, rough price).
@@ -44,11 +47,20 @@ No introduction or sign-off. Plain British/Irish English.`,
   const readable = new ReadableStream({
     async start(controller) {
       try {
+        let sent = 0;
         for await (const event of stream) {
-          if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') controller.enqueue(enc.encode(event.delta.text));
+          if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+            sent += event.delta.text.length;
+            controller.enqueue(enc.encode(event.delta.text));
+          }
         }
+        const final = await stream.finalMessage();
+        if (!sent) console.error('suggest: no text returned', { stop_reason: final.stop_reason, usage: final.usage });
         controller.close();
-      } catch (err) { controller.error(err); }
+      } catch (err) {
+        console.error('suggest: stream failed', err);
+        controller.error(err);
+      }
     },
   });
 

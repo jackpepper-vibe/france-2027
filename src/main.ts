@@ -337,6 +337,7 @@ async function ask(block: HTMLElement): Promise<void> {
       text += dec.decode(value, { stream: true });
       out.innerHTML = renderAnswer(text);
     }
+    if (!text.trim()) throw new Error('empty answer');
   } catch {
     out.classList.remove('is-loading');
     out.innerHTML = '<p class="err">Couldn’t reach Claude. Check you have signal and try again.</p>';
