@@ -227,7 +227,7 @@ function stopScreen(id: StopId): string {
 
   return `<main class="screen stop" style="--c:${s.color}">
     <div class="stop-hero"><img src="${s.art}" alt="">
-      <a class="back" href="#/trip" aria-label="Back to the trip">${icon('back', 22)}</a>
+      <a class="back" href="#/${nav.origin}" aria-label="Back to ${TAB_LABELS[nav.origin]}">${icon('back', 22)}</a>
     </div>
     <header class="stop-sign">
       ${stopNumber(s)}
@@ -355,11 +355,27 @@ async function ask(block: HTMLElement): Promise<void> {
 // ── Router ───────────────────────────────────────────────────────────────────
 type Tab = 'today' | 'trip' | 'map' | 'ask';
 
+const TAB_LABELS: Record<Tab, string> = { today: 'Today', trip: 'the trip', map: 'the map', ask: 'Ask' };
+
+// Navigation memory: which tab a stop page was opened from (so Back returns there),
+// and each tab's scroll position (so returning lands where you left off).
+const nav = {
+  origin: 'trip' as Tab,          // fallback when a stop page is opened directly
+  current: null as string | null, // page key of the screen currently shown
+  scroll: new Map<string, number>(),
+};
+
 function route(): void {
   const h = location.hash.replace(/^#\/?/, '') || 'today';
   const [page, arg] = h.split('/');
+  const isStop = page === 'stop' && !!arg && arg in STOPS;
+  const comingBack = nav.current?.startsWith('stop/') && !isStop;
+  if (nav.current) nav.scroll.set(nav.current, window.scrollY);
+  if (isStop && nav.current && !nav.current.startsWith('stop/')) nav.origin = nav.current as Tab;
+  nav.current = isStop ? `stop/${arg}` : (['trip', 'map', 'ask'].includes(page) ? page : 'today');
+
   let html: string; let tab: Tab;
-  if (page === 'stop' && arg && arg in STOPS) { html = stopScreen(arg as StopId); tab = 'trip'; }
+  if (isStop) { html = stopScreen(arg as StopId); tab = nav.origin; }
   else if (page === 'trip') { html = tripScreen(); tab = 'trip'; }
   else if (page === 'map') { html = mapScreen(); tab = 'map'; }
   else if (page === 'ask') { html = askScreen(); tab = 'ask'; }
@@ -369,8 +385,10 @@ function route(): void {
   document.getElementById('app')!.innerHTML = `${html}
     <nav class="tabbar" aria-label="Sections">${tabs.map(([k, l, ic]) =>
       `<a href="#/${k}" class="tab${k === tab ? ' on' : ''}"${k === tab ? ' aria-current="page"' : ''}>${icon(ic, 22)}<span>${l}</span></a>`).join('')}</nav>`;
-  window.scrollTo(0, 0);
-  if (page === 'trip') document.querySelector('.road-stop--here')?.scrollIntoView({ block: 'center' });
+  const saved = comingBack ? nav.scroll.get(nav.current) : undefined;
+  if (saved !== undefined) window.scrollTo(0, saved);
+  else if (page === 'trip') document.querySelector('.road-stop--here')?.scrollIntoView({ block: 'center' });
+  else window.scrollTo(0, 0);
 }
 
 document.addEventListener('click', e => {
